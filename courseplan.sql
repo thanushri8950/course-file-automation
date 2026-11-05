@@ -274,7 +274,9 @@ INSERT INTO `subjects` (`sid`, `fid`, `academic_year`, `subject_name`, `year`, `
 (15, 6, '2020-2021', 'Web Technologies', 1, 1, 'CSE-A', 0),
 (16, 1, '2020-2021', 'qqq', 1, 1, 'CSE-A', 0),
 (18, 10, '2020-2021', 'Artificial Intelligence', 4, 1, 'CSE-C', 0),
-(19, 11, '2020-2021', 'Web Technologies', 1, 1, 'CSE-A', 0);
+(19, 11, '2020-2021', 'Web Technologies', 1, 1, 'CSE-A', 0),
+(20, 2, '2026-2027', 'Cryptography and cyber security', 3, 5, 'CSE-C', 0),
+(21, 2, '2026-2027', 'Fundamentals of Management', 3, 5, 'CSE-C', 0);
 
 -- --------------------------------------------------------
 
@@ -437,7 +439,7 @@ ALTER TABLE `roleplay`
 -- AUTO_INCREMENT for table `subjects`
 --
 ALTER TABLE `subjects`
-  MODIFY `sid` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `sid` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `users`

@@ -16,18 +16,19 @@ if (isset($_GET['sid'])) {
 }
 
 $fid = $_SESSION['userid'];
-$qry = "SELECT distinct academic_year from subjects where fid = '$fid' order by substr(academic_year,2,2) desc";
+$qry = "SELECT DISTINCT academic_year FROM subjects WHERE fid = '$fid' AND academic_year = '2026-2027' ORDER BY academic_year DESC";
 $res = mysqli_query($db, $qry);
 $academicYears = [];
 while ($yearRow = mysqli_fetch_assoc($res)) $academicYears[] = $yearRow['academic_year'];
 
-$selectedYear = isset($_GET['acyear']) ? $_GET['acyear'] : '';
-$sem1 = $sem2 = false;
+$selectedYear = isset($_GET['acyear']) && in_array($_GET['acyear'], $academicYears, true)
+	? $_GET['acyear']
+	: (count($academicYears) > 0 ? $academicYears[0] : '');
+$sem5 = false;
 if ($selectedYear !== '') {
 	$_SESSION['academic_year'] = $selectedYear;
 	$acyear = $selectedYear;
-	$sem2 = mysqli_query($db, "SELECT * from subjects where academic_year='$acyear' and fid='$fid' and semester=2");
-	$sem1 = mysqli_query($db, "SELECT * from subjects where academic_year='$acyear' and fid='$fid' and semester=1");
+	$sem5 = mysqli_query($db, "SELECT * from subjects where academic_year='$acyear' and fid='$fid' and semester=5 ORDER BY subject_name");
 }
 
 function renderSubjectCards($subjects, $db) {
@@ -92,7 +93,7 @@ function renderSubjectCards($subjects, $db) {
 
 		<?php if ($selectedYear !== '') { ?>
 			<div class="sjc-selected-year"><span>Showing course files for</span><strong><?php echo htmlspecialchars($selectedYear, ENT_QUOTES, 'UTF-8'); ?></strong></div>
-			<?php foreach ([2 => $sem2, 1 => $sem1] as $semester => $subjects) { if ($subjects && mysqli_num_rows($subjects) > 0) { ?>
+			<?php foreach ([5 => $sem5] as $semester => $subjects) { if ($subjects && mysqli_num_rows($subjects) > 0) { ?>
 				<section class="sjc-semester" aria-labelledby="semester-<?php echo $semester; ?>">
 					<div class="sjc-section-heading"><div><p class="sjc-kicker">ACADEMIC YEAR <?php echo htmlspecialchars($selectedYear, ENT_QUOTES, 'UTF-8'); ?></p><h2 id="semester-<?php echo $semester; ?>">Semester <?php echo $semester; ?></h2></div><span class="sjc-year-count"><?php echo mysqli_num_rows($subjects); ?> course<?php echo mysqli_num_rows($subjects) === 1 ? '' : 's'; ?></span></div>
 					<div class="sjc-course-grid"><?php renderSubjectCards($subjects, $db); ?></div>
