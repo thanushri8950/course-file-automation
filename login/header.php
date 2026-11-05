@@ -1,5 +1,5 @@
 <?php 
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 $subdir="../";
 // if ((basename(__DIR__) == "student") or (basename(__DIR__) == "faculty")) $subdir="studentinfo/";
 // echo (dirname(__FILE__));
@@ -9,6 +9,7 @@ $subdir="../";
 
 <!-- <link rel="stylesheet" href="test.css"> -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<link rel="stylesheet" href="../header/sjc-theme.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
@@ -28,7 +29,10 @@ $subdir="../";
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>                        
       </button>
-      <a class="navbar-brand" href="#">ANITS Course Files</a>
+      <a class="navbar-brand sjc-brand" href="../dashboard/">
+        <img class="sjc-brand__logo" src="../sjec_logo.gif" alt="SJEC crest">
+        <span class="sjc-brand__text"><strong>St Joseph Engineering College</strong><small>Course File Automation · Mangalore</small></span>
+      </a>
     </div>
     <div class="collapse navbar-collapse" id="myNavbar">
       <ul class="nav navbar-nav">
