@@ -195,7 +195,7 @@ if(isset($_SESSION['userid'])) header("Location:../dashboard");
 			            </div>
 			            
 			            <div class="coordinator">
-			                <p style="text-align: right; color: #fff;"><b>COORDINATOR : Joshua Johnson</b></p>
+			                <p style="text-align: right; color: #fff;"><b>COORDINATOR : Dr Harivinod</b></p>
 			            </div>
 			        </div>
         		</div>

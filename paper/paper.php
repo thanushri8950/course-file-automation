@@ -156,8 +156,8 @@ if (isset ($_GET['paper_id']))
             
 
             <div style="margin-left: 10%;width: 1000px;">
-                <p style="text-align: center; font-weight: bold; margin-bottom: -13px;">Anil Neerukonda Institute of Technology and Sciences (ANITS)</p>
-                <p style="text-align: center; margin-bottom: -13px;">(An Autonomous Institute Affiliated to Andhra University, Visakhapatnam)</p>
+                <p style="text-align: center; font-weight: bold; margin-bottom: -13px;">St Joseph Engineering College (SJEC)</p>
+                <p style="text-align: center; margin-bottom: -13px;">(An Autonomous Institute)</p>
                 <p style="text-align: center; font-weight: bold; margin-bottom: -13px;">Department of Computer Science &amp; Engineering</p>
                 <p><input id="paper_name" style="text-align: center; font-weight: bold; width: 100%; margin-bottom: -13px;" onchange="update(this)" value="Descriptive Examination-II"></p>
                 <p style="text-align: center;"></p> 
