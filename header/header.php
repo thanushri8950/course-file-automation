@@ -1,15 +1,17 @@
 <?php
 // session_start();
 if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start(); 
+    session_start();
+}
+if (!isset($_SESSION['userid'])) {
+    header("Location:../login/index_login.php");
+    exit;
 }
 require("../db.php");
 
-$name = $_SESSION['name'];
-$sid = $_SESSION['sid'];
-
-$qry = "SELECT * FROM status where sid='$sid' ";
-$status = mysqli_fetch_assoc(mysqli_query($db, $qry));
+$name = isset($_SESSION['name']) ? $_SESSION['name'] : '';
+$sid = isset($_SESSION['sid']) ? (int)$_SESSION['sid'] : 0;
+$status = ensure_course_status($db, $sid);
 
 ?>
 		<script src="../js/jquery.min.js"></script>
@@ -125,6 +127,7 @@ $status = mysqli_fetch_assoc(mysqli_query($db, $qry));
 				  <!-- <a href="../fileupload">Result analysis</a> -->
 				  
 				  <li><a href="../fileupload/index.php?page=co_po_attainment">Co-Po Attainment<div style="float: right; margin-right: 10px;"><?php if ($status['co_po']=="Completed") echo "<i class='fa fa-check fa-lg' aria-hidden='true'></i>"; ?></div></a></li>
+				  <li><a href="../assessment/index.php">Course Assessment Sheet</a></li>
 				  
 				  <li><a href="../roleplay/index.php">Role Play</a></li>
 		        

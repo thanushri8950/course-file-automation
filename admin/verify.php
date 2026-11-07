@@ -1,14 +1,18 @@
 <?php
-include ("../header/admin_header.php");
+session_start();
 require "../db.php";
-
-if ($_SESSION['usertype']!="admin") header("Location:../login/index_login.php");
+if (!isset($_SESSION['userid']) || !isset($_SESSION['usertype']) || $_SESSION['usertype'] !== "admin") {
+	header("Location:../login/index_login.php");
+	exit;
+}
+ensure_all_course_statuses($db);
+include ("../header/admin_header.php");
 
 // $ye=$_SESSION['2018']
 if (isset($_GET['acyear']))
 {
 	$acyear = $_GET['acyear'];
-	$qry = "SELECT * from users u inner join subjects s on s.fid=u.userid inner join status ss on s.sid=ss.sid where s.academic_year='$acyear' order by s.section ";
+	$qry = "SELECT u.name AS account_name, s.*, COALESCE(NULLIF(s.faculty_name, ''), u.name) AS faculty_display_name, ss.* from users u inner join subjects s on s.fid=u.userid inner join status ss on s.sid=ss.sid where s.academic_year='$acyear' order by s.section ";
 	$res = mysqli_query($db, $qry);
 }
 
@@ -79,7 +83,8 @@ $ay = mysqli_query($db, $qry);
 				<tr>
 					<th><font size="4px" align="center">Year</font></th>
 					<th><font size="4px"align="center">Subject</font></th>
-					<th><font size="4px"align="center">Section</font></th>
+					<th><font size="4px"align="center">Department</font></th>
+					<th><font size="4px"align="center">Section / Branch</font></th>
 					<th><font size="4px"align="center">Faculty name</font></th>
 					<th><font size="4px"align="center">Individualtimetable</font></th>
 					<th><font size="4px"align="center">Classtimetable</font></th>
@@ -97,8 +102,9 @@ $ay = mysqli_query($db, $qry);
 				<tr>
 					<td><?php echo $row['year'] ?></td>
 					<td><?php echo $row['subject_name'] ?></td>
+					<td><?php echo htmlspecialchars($row['department'], ENT_QUOTES, 'UTF-8') ?></td>
 					<td><?php echo $row['section'] ?></td>
-					<td><?php echo $row['name'] ?></td>
+					<td><?php echo htmlspecialchars($row['faculty_display_name'], ENT_QUOTES, 'UTF-8') ?></td>
 					<td><?php if ($row['individual_time_table']=="Completed") echo "<i class='fa fa-check fa-lg' aria-hidden='true'></i>" ?></td>
 					<td><?php if ($row['class_time_table']=="Completed") echo "<i class='fa fa-check fa-lg' aria-hidden='true'></i>" ?></td>
 					<td><?php if ($row['course_plan']=="Completed") echo "<i class='fa fa-check fa-lg' aria-hidden='true'></i>" ?></td>

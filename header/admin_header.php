@@ -1,8 +1,13 @@
 <?php
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+
+if (!isset($_SESSION['userid']) || !isset($_SESSION['usertype']) || $_SESSION['usertype'] !== 'admin') {
+    header("Location:../login/index_login.php");
+    exit;
+}
 
 if (isset($_SESSION['is_admin'])) if ($_SESSION['is_admin']) $_SESSION['name'] = $_SESSION['admin_name'];
-$name = $_SESSION['name'];
+$name = isset($_SESSION['name']) ? $_SESSION['name'] : '';
 
 ?>
 		<script src="../js/jquery.min.js"></script>
@@ -81,10 +86,11 @@ $name = $_SESSION['name'];
 		        <ul class="list-unstyled components mb-5">
 		          <li class="active"><a href="../admin/editable.php"><span class="fa fa-home mr-3"></span> Home</a></li>
 		          
-		          <li><a href="editable.php">Edit Lecturer</a></li>
-		          <li><a href="assign.php">Assign Lecturer</a></li>
-		          <li><a href="verify.php">Review All</a></li>
-		          <li><a href="adduser.php">Add User</a></li>
+		          <li><a href="../admin/editable.php">Edit Lecturer</a></li>
+		          <li><a href="../admin/assign.php">Assign Lecturer</a></li>
+		          <li><a href="../admin/verify.php">Review All</a></li>
+		          <li><a href="../admin/adduser.php">Add User</a></li>
+		          <li><a href="../assessment/admin.php">Course Assessment Sheet</a></li>
 				  
 		        </ul>
 

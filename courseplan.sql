@@ -251,11 +251,17 @@ INSERT INTO `status` (`sid`, `individual_time_table`, `class_time_table`, `cours
 CREATE TABLE `subjects` (
   `sid` int(255) NOT NULL,
   `fid` int(255) NOT NULL,
+  `faculty_name` varchar(255) NOT NULL DEFAULT '',
+  `faculty_username` varchar(255) NOT NULL DEFAULT '',
+  `faculty_email` varchar(255) NOT NULL DEFAULT '',
+  `faculty_phone` varchar(50) NOT NULL DEFAULT '',
+  `department` varchar(100) NOT NULL DEFAULT '',
+  `branch` varchar(100) NOT NULL DEFAULT '',
   `academic_year` varchar(12) NOT NULL,
   `subject_name` varchar(50) NOT NULL,
   `year` int(10) NOT NULL,
   `semester` int(10) NOT NULL,
-  `section` varchar(20) NOT NULL,
+  `section` varchar(20) NOT NULL DEFAULT '',
   `progress` int(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -451,3 +457,36 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- Course assessment uploads (PDF and Excel files)
+CREATE TABLE IF NOT EXISTS `assessment_files` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sid` int(255) NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `original_name` varchar(255) NOT NULL,
+  `stored_name` varchar(80) NOT NULL,
+  `uploaded_by` int(255) NOT NULL,
+  `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `course_category` (`sid`, `category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Keep the imported sample courses compatible with the separate fields.
+UPDATE `subjects`
+SET `department` = SUBSTRING_INDEX(`section`, '-', 1),
+    `branch` = CASE
+      WHEN SUBSTRING_INDEX(`section`, '-', 1) = 'CSBS' AND `section` LIKE '%-%-%'
+      THEN SUBSTRING_INDEX(SUBSTRING_INDEX(`section`, '-', 2), '-', -1)
+      ELSE ''
+    END,
+    `section` = SUBSTRING_INDEX(`section`, '-', -1)
+WHERE `department` = '' AND `section` LIKE '%-%';
+
+UPDATE `subjects`
+SET `semester` = CASE `year`
+  WHEN 2 THEN `semester` + 2
+  WHEN 3 THEN `semester` + 4
+  WHEN 4 THEN `semester` + 6
+  ELSE `semester`
+END
+WHERE `semester` IN (1, 2) AND `year` IN (2, 3, 4);
