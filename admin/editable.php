@@ -1,28 +1,31 @@
 <?php include("../header/admin_header.php") ?>
 
 <?php
-// session_start();
-if ($_SESSION['usertype']!="admin") header("Location:../login/index_login.php");
-
 require "../db.php";
 
-$qry = "SELECT distinct academic_year from subjects";
-$ay = mysqli_query($db, $qry);
+$selectedYear = isset($_GET['acyear']) ? trim($_GET['acyear']) : '';
+$notice = isset($_GET['updated']) ? 'Faculty details updated for this subject.' : '';
 
-if (isset($_GET['get']))
-{
-  $acyear = $_GET['acyear'];
-
-  $qry = "SELECT * from subjects s inner join users u on u.userid=s.fid where s.academic_year='$acyear' order by s.section ";
-  $res = mysqli_query($db, $qry);
-}
 if (isset($_GET['del_sid']))
 {
-  $sid = $_GET['del_sid'];
-
-  $qry = "DELETE from subjects where sid='$sid' ";
-  mysqli_query($db, $qry);
+  $sidToDelete = (int)$_GET['del_sid'];
+  $delete = $db->prepare("DELETE FROM subjects WHERE sid = ?");
+  $delete->bind_param('i', $sidToDelete);
+  $delete->execute();
+  $delete->close();
 }
+
+$ay = mysqli_query($db, "SELECT DISTINCT academic_year FROM subjects ORDER BY academic_year DESC");
+
+if (isset($_GET['get']) && $selectedYear !== '')
+{
+  $query = $db->prepare("SELECT s.*, u.name AS account_name, u.userid, COALESCE(NULLIF(s.faculty_name, ''), u.name) AS display_faculty_name FROM subjects s INNER JOIN users u ON u.userid = s.fid WHERE s.academic_year = ? ORDER BY s.section");
+  $query->bind_param('s', $selectedYear);
+  $query->execute();
+  $res = $query->get_result();
+  $query->close();
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -175,40 +178,46 @@ input[name="get"]
 <body>
 
 
-<form>
+<form method="get">
   <div align="center">
-  <select name="acyear">
+  <select name="acyear" required>
+    <option value="">Select academic year</option>
     <?php while($row = mysqli_fetch_assoc($ay)) { ?>
-      <option value="<?php echo $row['academic_year'] ?>"><?php echo $row['academic_year'] ?></option>
+      <option value="<?php echo htmlspecialchars($row['academic_year'], ENT_QUOTES, 'UTF-8') ?>" <?php echo ($selectedYear === $row['academic_year']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($row['academic_year'], ENT_QUOTES, 'UTF-8') ?></option>
     <?php } ?>
   </select>
-  <input type="submit" name="get" value="Show">
+  <button type="submit" name="get" value="Show">Show</button>
 </form>
 </div>
 <h1 style="text-align: center;font-family:sans-serif;"></h1>
+<?php if ($notice !== '') { ?><div class="alert alert-success" style="margin: 18px auto; width: 60%;"><?php echo $notice; ?></div><?php } ?>
 <table>
 
   <tr>
-    <th>Name</th>
-      <th>Subject</th>
+    <th>Faculty</th>
+    <th>Edit Faculty Details</th>
+    <th>Subject</th>
+    <th>Department</th>
     <th>Year</th>
     <th>Semester</th>
-    <th>Section</th>
+    <th>Section / Branch</th>
     <th>View</th>
       <th>Modify</th>
        <th>Delete</th>
   </tr>
 
-  <?php if (isset($_GET['get'])) while($row = mysqli_fetch_assoc($res)) { ?>
+  <?php if (isset($res)) while($row = mysqli_fetch_assoc($res)) { ?>
   <tr>
-    <td><?php echo $row['name'] ?></td>
-    <td><?php echo $row['subject_name'] ?></td>
-    <td><?php echo $row['year'] ?></td>
-    <td><?php echo $row['semester'] ?></td>
-    <td><?php echo $row['section'] ?></td>
-    <td><button onclick="window.location.href = '../dashboard/coursefile.php?sid=<?php echo $row['sid'] ?>'" class="btn">view</button></td>
-     <td><button onclick="window.location.href = 'table.php?sid=<?php echo $row['sid'] ?>'" class="btn">Review</button></td>
-      <td><button onclick="window.location.href = 'editable.php?del_sid=<?php echo $row['sid'] ?>&acyear=<?php echo $row['academic_year'] ?>&get=Show'" class="btn2">Delete</button></td>
+    <td><?php echo htmlspecialchars($row['display_faculty_name'], ENT_QUOTES, 'UTF-8') ?></td>
+    <td><a href="faculty.php?sid=<?php echo (int)$row['sid'] ?>&amp;acyear=<?php echo rawurlencode($selectedYear) ?>">Edit details</a></td>
+    <td><?php echo htmlspecialchars($row['subject_name'], ENT_QUOTES, 'UTF-8') ?></td>
+    <td><?php echo htmlspecialchars($row['department'], ENT_QUOTES, 'UTF-8') ?></td>
+    <td><?php echo (int)$row['year'] ?></td>
+    <td><?php echo (int)$row['semester'] ?></td>
+    <td><?php echo htmlspecialchars($row['section'], ENT_QUOTES, 'UTF-8') ?></td>
+    <td><button onclick="window.location.href = '../dashboard/coursefile.php?sid=<?php echo (int)$row['sid'] ?>'" class="btn">view</button></td>
+     <td><button onclick="window.location.href = 'table.php?sid=<?php echo (int)$row['sid'] ?>'" class="btn">Review</button></td>
+      <td><button onclick="window.location.href = 'editable.php?del_sid=<?php echo (int)$row['sid'] ?>&amp;acyear=<?php echo rawurlencode($selectedYear) ?>&amp;get=Show'" class="btn2">Delete</button></td>
   </tr>
   <?php } ?>
 </table>

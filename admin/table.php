@@ -2,12 +2,26 @@
 session_start();
 require("../db.php");
 
-$sid = $_GET['sid'];
+if (!isset($_SESSION['userid']) || !isset($_SESSION['usertype']) || $_SESSION['usertype'] !== 'admin') {
+  header("Location:../login/index_login.php");
+  exit;
+}
+
+$sid = isset($_GET['sid']) ? (int)$_GET['sid'] : (isset($_SESSION['sid']) ? (int)$_SESSION['sid'] : 0);
+if ($sid <= 0) {
+  header("Location:../admin/index.php");
+  exit;
+}
 
 if (isset($_GET['sid']))
 {
   $qry = "SELECT * from subjects s inner join users u on s.fid=u.userid and s.sid='$sid' ";
   $param = mysqli_fetch_assoc(mysqli_query($db, $qry));
+
+  if (!$param) {
+    header("Location:../admin/index.php");
+    exit;
+  }
 
   $_SESSION['name'] = $param['name'];
   $_SESSION['userid'] = $param['userid'];
@@ -34,8 +48,7 @@ if (isset($_POST['update']))
 	?><script type="text/javascript">window.location.href="table.php?sid=<?php echo $sid ?>";</script><?php
 }
 
-$qry = "SELECT * FROM status where sid='$sid' ";
-$data = mysqli_fetch_assoc(mysqli_query($db, $qry));
+$data = ensure_course_status($db, $sid);
 
 ?>
 
@@ -331,4 +344,3 @@ $data = mysqli_fetch_assoc(mysqli_query($db, $qry));
 </script>
 </body>
 </html>
-											

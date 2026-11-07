@@ -3,26 +3,32 @@ session_start();
 
 require "../db.php";
 
-if(!isset($_SESSION['userid']))   { ?><script type="text/javascript">window.location.href="../login/index_login.php"</script><?php }
+if(!isset($_SESSION['userid'])) { header("Location:../login/index_login.php"); exit; }
 
 if (isset($_GET['sid']))
 {
-  $sid = $_GET['sid'];
-  $qry = "SELECT * from subjects s inner join users u on s.fid=u.userid and s.sid='$sid' ";
-  $param = mysqli_fetch_assoc(mysqli_query($db, $qry));
+  $sid = (int)$_GET['sid'];
+  $query = mysqli_prepare($db, "SELECT s.sid, s.subject_name FROM subjects s WHERE s.sid = ?");
+  mysqli_stmt_bind_param($query, "i", $sid);
+  mysqli_stmt_execute($query);
+  $result = mysqli_stmt_get_result($query);
+  $course = $result ? mysqli_fetch_assoc($result) : null;
+  mysqli_stmt_close($query);
 
-  $_SESSION['name'] = $param['name'];
-  $_SESSION['userid'] = $param['userid'];
+  if (!$course) {
+    header("Location:../dashboard/index.php");
+    exit;
+  }
   $_SESSION['sid'] = $sid;
-  header("Location:../dashboard/coursefile.php");
-  // echo "<br>sdf";
+  $_SESSION['subject_name'] = $course['subject_name'];
+  header("Location:coursefile.php");
+  exit;
 }
+if (empty($_SESSION['sid'])) { header("Location:../dashboard/index.php"); exit; }
+$sid = (int)$_SESSION['sid'];
+$email = isset($_SESSION['email']) ? $_SESSION['email'] : '';
+$data = ensure_course_status($db, $sid);
 include("../header/header.php");
-// $sid = $_SESSION['sid'];
-$sid =  $_SESSION['sid'];
-$email =  $_SESSION['email'];
-$qry = "SELECT * FROM status where sid='$sid' ";
-$data = mysqli_fetch_assoc(mysqli_query($db, $qry));
 
 ?>
 

@@ -6,47 +6,67 @@ if (!isset($_SESSION['userid'])) {
 	header("Location:../login/index_login.php");
 	exit;
 }
-include ("../login/header.php");
-
 if (isset($_GET['sid'])) {
-	$_SESSION['sid'] = $_GET['sid'];
-	$_SESSION['subject_name'] = $_GET['subject_name'];
+	$_SESSION['sid'] = (int)$_GET['sid'];
+	$_SESSION['subject_name'] = isset($_GET['subject_name']) ? $_GET['subject_name'] : '';
 	header("Location:coursefile.php");
 	exit;
 }
 
-$fid = $_SESSION['userid'];
-$qry = "SELECT DISTINCT academic_year FROM subjects WHERE fid = '$fid' AND academic_year = '2026-2027' ORDER BY academic_year DESC";
-$res = mysqli_query($db, $qry);
-$academicYears = [];
-while ($yearRow = mysqli_fetch_assoc($res)) $academicYears[] = $yearRow['academic_year'];
+include ("../login/header.php");
+
+$fid = (int)$_SESSION['userid'];
+$yearQuery = $db->prepare("SELECT DISTINCT academic_year FROM subjects WHERE fid = ? AND academic_year = '2026-2027' ORDER BY academic_year DESC");
+$yearQuery->bind_param('i', $fid);
+$yearQuery->execute();
+$yearResult = $yearQuery->get_result();
+$academicYears = array();
+while ($yearRow = $yearResult->fetch_assoc()) $academicYears[] = $yearRow['academic_year'];
+$yearQuery->close();
 
 $selectedYear = isset($_GET['acyear']) && in_array($_GET['acyear'], $academicYears, true)
 	? $_GET['acyear']
 	: (count($academicYears) > 0 ? $academicYears[0] : '');
-$sem5 = false;
+$semesters = array();
 if ($selectedYear !== '') {
 	$_SESSION['academic_year'] = $selectedYear;
-	$acyear = $selectedYear;
-	$sem5 = mysqli_query($db, "SELECT * from subjects where academic_year='$acyear' and fid='$fid' and semester=5 ORDER BY subject_name");
+	$courseQuery = $db->prepare("SELECT * FROM subjects WHERE academic_year = ? AND fid = ? ORDER BY semester, department, section, subject_name");
+	$courseQuery->bind_param('si', $selectedYear, $fid);
+	$courseQuery->execute();
+	$courseResult = $courseQuery->get_result();
+	while ($course = $courseResult->fetch_assoc()) {
+		$semesterNumber = (int)$course['semester'];
+		if (!isset($semesters[$semesterNumber])) $semesters[$semesterNumber] = array();
+		$semesters[$semesterNumber][] = $course;
+	}
+	$courseQuery->close();
 }
 
 function renderSubjectCards($subjects, $db) {
-	while ($row = mysqli_fetch_assoc($subjects)) {
+	foreach ($subjects as $row) {
 		$sid = (int)$row['sid'];
-		$statusResult = mysqli_query($db, "SELECT * FROM status where sid='$sid'");
-		$status = mysqli_fetch_array($statusResult);
+		$status = ensure_course_status($db, $sid);
 		$progress = 0;
-		if ($status) for ($i = 1; $i < 12; $i++) if ($status[$i] === "Completed") $progress++;
+		foreach (array('individual_time_table', 'class_time_table', 'course_plan', 'lesson_plan', 'assignment', 'mid', 'remedial', 'tutorial', 'quiz', 'co_po', 'notes') as $field) {
+			if (isset($status[$field]) && $status[$field] === 'Completed') $progress++;
+		}
 		$progress = floor(($progress / 11) * 100);
 		$subjectName = htmlspecialchars($row['subject_name'], ENT_QUOTES, 'UTF-8');
-		$section = htmlspecialchars($row['section'], ENT_QUOTES, 'UTF-8');
+		$department = isset($row['department']) ? $row['department'] : '';
+		if ($department === 'CSBS') $department = 'ICBS';
+		$sectionBranch = isset($row['section']) ? $row['section'] : '';
+		if ($department === 'CSE' && in_array(strtoupper($sectionBranch), array('A', 'B', 'C', 'D'), true)) $sectionBranch = 'CSE-' . strtoupper($sectionBranch);
+		if ($department === 'ICBS' && !empty($row['branch'])) $sectionBranch = $row['branch'];
+		$courseDetails = array();
+		if ($department !== '') $courseDetails[] = htmlspecialchars($department, ENT_QUOTES, 'UTF-8');
+		if ($sectionBranch !== '') $courseDetails[] = htmlspecialchars($sectionBranch, ENT_QUOTES, 'UTF-8');
+		$courseDetailsText = implode(' · ', $courseDetails);
 		$target = "../dashboard/index.php?sid=" . $sid . "&subject_name=" . rawurlencode($row['subject_name']);
 		?>
 		<a class="sjc-course-card" href="<?php echo htmlspecialchars($target, ENT_QUOTES, 'UTF-8'); ?>">
 			<div class="sjc-course-card__top"><span class="sjc-course-card__eyebrow">COURSE FILE</span><span class="sjc-course-card__arrow" aria-hidden="true">↗</span></div>
 			<h4><?php echo $subjectName; ?></h4>
-			<p>Year <?php echo (int)$row['year']; ?>/4 <span aria-hidden="true">·</span> <?php echo $section; ?></p>
+			<p>Year <?php echo (int)$row['year']; ?>/4<?php echo $courseDetailsText !== '' ? ' · ' . $courseDetailsText : ''; ?></p>
 			<div class="sjc-progress"><div class="sjc-progress__track"><span style="width:<?php echo $progress; ?>%"></span></div><strong><?php echo $progress; ?>%</strong></div>
 			<span class="sjc-course-card__foot">Open course file</span>
 		</a>
@@ -93,12 +113,12 @@ function renderSubjectCards($subjects, $db) {
 
 		<?php if ($selectedYear !== '') { ?>
 			<div class="sjc-selected-year"><span>Showing course files for</span><strong><?php echo htmlspecialchars($selectedYear, ENT_QUOTES, 'UTF-8'); ?></strong></div>
-			<?php foreach ([5 => $sem5] as $semester => $subjects) { if ($subjects && mysqli_num_rows($subjects) > 0) { ?>
-				<section class="sjc-semester" aria-labelledby="semester-<?php echo $semester; ?>">
-					<div class="sjc-section-heading"><div><p class="sjc-kicker">ACADEMIC YEAR <?php echo htmlspecialchars($selectedYear, ENT_QUOTES, 'UTF-8'); ?></p><h2 id="semester-<?php echo $semester; ?>">Semester <?php echo $semester; ?></h2></div><span class="sjc-year-count"><?php echo mysqli_num_rows($subjects); ?> course<?php echo mysqli_num_rows($subjects) === 1 ? '' : 's'; ?></span></div>
+			<?php foreach ($semesters as $semester => $subjects) { ?>
+				<section class="sjc-semester" aria-labelledby="semester-<?php echo (int)$semester; ?>">
+					<div class="sjc-section-heading"><div><p class="sjc-kicker">ACADEMIC YEAR <?php echo htmlspecialchars($selectedYear, ENT_QUOTES, 'UTF-8'); ?></p><h2 id="semester-<?php echo (int)$semester; ?>">Semester <?php echo (int)$semester; ?></h2></div><span class="sjc-year-count"><?php echo count($subjects); ?> course<?php echo count($subjects) === 1 ? '' : 's'; ?></span></div>
 					<div class="sjc-course-grid"><?php renderSubjectCards($subjects, $db); ?></div>
 				</section>
-			<?php } } ?>
+			<?php } ?>
 		<?php } else if (count($academicYears) > 0) { ?>
 			<div class="sjc-hint"><span class="sjc-hint__icon" aria-hidden="true">i</span><p>Select an academic year above to see its semesters and assigned courses.</p></div>
 		<?php } ?>
