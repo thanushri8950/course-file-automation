@@ -65,7 +65,7 @@ $status = ensure_course_status($db, $sid);
 			  	
 			  	<div class="menu">
 			  		<ul>
-		  			<li><h2><a href="../dashboard/" class="logo sjc-brand"><img class="sjc-brand__logo" src="../sjec_logo.gif" alt="SJEC crest"><span class="sjc-brand__text"><strong>St Joseph Engineering College</strong><small>Course File Automation · Mangalore</small></span></a></h2></li>
+					<li><h2><a href="../dashboard/" class="logo sjc-brand"><img class="sjc-brand__logo" src="../sjec_logo.gif" alt="SJEC crest"><span class="sjc-brand__text"><strong>SJEC</strong><small>Course Files</small></span></a></h2></li>
 			  			<!-- <li style="color: white;font-size: 50px;font-weight: 100;">|</li> -->
 			  			<!-- <div class="menu_items">
 				  			<li style="margin-left: 50px;"><a href="../dashboard">Dashboard</a></li>
@@ -87,7 +87,7 @@ $status = ensure_course_status($db, $sid);
 				        </button>
 			        </div>
 					<div class="p-4">
-		  				  <h1><a href="../dashboard/" class="logo"><img src="../sjec_logo.gif" alt="SJEC crest"><span>St Joseph Engineering College<span>Course Files · Mangalore</span></span></a></h1>
+							<h1><a href="../dashboard/" class="logo"><img src="../sjec_logo.gif" alt="SJEC crest"><span>SJEC<span>Course Files</span></span></a></h1>
 		        <ul class="list-unstyled components mb-5">
 		          
 		          <li class="active"><a href="../dashboard/coursefile.php"><span class="fa fa-home mr-3"></span> Home</a></li>
